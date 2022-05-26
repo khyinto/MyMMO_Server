@@ -1,31 +1,41 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace ServerCore
 {
     class Program
     {
-        static void MainThread(object state)
+        volatile static bool _stop = false;
+
+        static void ThreadMain()
         {
-            for (int i = 0; i < 5 ; i++)
+            Console.WriteLine("쓰레드 시작");
+
+            while ( _stop == false )
             {
-                Console.WriteLine("Hello Thread");
+                // 누군가가 stop 신호를 해주기를 기다린다.
             }
-            
+
+            Console.WriteLine("쓰레드 종료");
         }
 
         static void Main(string[] args)
         {
-            ThreadPool.QueueUserWorkItem(MainThread);
+            Task t = new Task(ThreadMain);
+            t.Start();
 
-            // 쓰레드 생성 비용은 비싸기 때문에 쓰레드풀을 이용한다.
-            //Thread t = new Thread(MainThread);
-            //t.Name = "Test Thread";
-            //t.IsBackground = true;  // 메인쓰레드가 종료되면 바로 프로세스를 종료한다.
-            //t.Start();
-            //Console.WriteLine("Waiting for Thread");
-            //t.Join();
-            //Console.WriteLine("Hello World!");
+            //////////////////////////////////////////////////////////////////////////
+            // 1초 후에 스탑 하겠지. 
+            Thread.Sleep(1000);
+
+            _stop = true;
+
+            Console.WriteLine("Stop 호출");
+            Console.WriteLine("종료 대기중");
+            t.Wait();
+            Console.WriteLine("종료성공");
         }
+
     }
 }
