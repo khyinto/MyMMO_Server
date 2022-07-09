@@ -1,16 +1,14 @@
 ﻿using System;
+using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Text;
 
 namespace ServerCore
 {
     class Program
     {
-
-
-
-
-
         #region 
         /*
         volatile static bool _stop = false;
@@ -28,32 +26,48 @@ namespace ServerCore
         }
         */
         #endregion
-
+        static Listener _listener = new Listener();
 
         static void Main(string[] args)
         {
+            // DNS ( Domain Name System )
+            string host = Dns.GetHostName();
+            IPHostEntry ipHost = Dns.GetHostEntry(host);
+            // ip는 다수일수도 일다.
+            IPAddress ipAddr = ipHost.AddressList[0];
+            IPEndPoint endPoint = new IPEndPoint(ipAddr, 7777);
 
-            #region 
-            /*
-            Task t = new Task(ThreadMain);
-            t.Start();
+            try
+            {
+                _listener.Init(endPoint);
 
-            //////////////////////////////////////////////////////////////////////////
-            // 1초 후에 스탑 하겠지. 
-            Thread.Sleep(1000);
+                while (true)
+                {
+                    Console.WriteLine("Listening.......");
+                    // 손님을 입장시킨다.
+                    Socket clientSocket = _listener.Accept();
 
-            _stop = true;
+                    // 받는다.
+                    byte[] recvBuff = new byte[1024];
+                    int recvBytes = clientSocket.Receive(recvBuff);
+                    string recvData = Encoding.UTF8.GetString(recvBuff, 0, recvBytes);
+                    Console.WriteLine($"[From Client] {recvData} ");
 
-            Console.WriteLine("Stop 호출");
-            Console.WriteLine("종료 대기중");
-            t.Wait();
-            Console.WriteLine("종료성공");
-            */
-            #endregion
+                    // 보낸다.
+                    byte[] sendBuff = Encoding.UTF8.GetBytes(" Welcome to MMO Server !");
+                    clientSocket.Send(sendBuff);
 
-            InterLocked();
+                    // 쫓아낸다.
+                    clientSocket.Shutdown(SocketShutdown.Both);
+                    clientSocket.Close();
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
 
-
+            
         }
 
         private static void Cashed()
@@ -122,7 +136,7 @@ namespace ServerCore
         #endregion
 
         #region Interlocked
-        static int number = 0 ;
+        static int number = 0;
 
         static void Interlock_Thread_1()
         {
